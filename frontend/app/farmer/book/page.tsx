@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "../../../lib/LanguageContext";
 import { api } from "../../../lib/api";
-import { MapPin, Calendar, Clock, Wheat, ArrowRight, CheckCircle2, ChevronRight, AlertCircle } from "lucide-react";
+import { MapPin, Calendar, Clock, ArrowRight, CheckCircle2, ChevronRight, AlertCircle, Info, Landmark } from "lucide-react";
 
 export default function BookSlotPage() {
   const { t } = useLanguage();
@@ -30,16 +30,12 @@ export default function BookSlotPage() {
   const [success, setSuccess] = useState(false);
   const [createdBooking, setCreatedBooking] = useState<any | null>(null);
 
-  // 1. Set default date to today
   useEffect(() => {
     const todayStr = new Date().toISOString().split("T")[0];
     setDate(todayStr);
-    
-    // Initial fetch of all centres
     fetchCentres("", "");
   }, []);
 
-  // 2. Fetch Centres
   const fetchCentres = async (distFilter: string, blkFilter: string) => {
     setCentresLoading(true);
     setErrorMsg("");
@@ -58,7 +54,6 @@ export default function BookSlotPage() {
     fetchCentres(district, block);
   };
 
-  // 3. Fetch Slots when Centre or Date changes
   useEffect(() => {
     if (!selectedCentre || !date) return;
     
@@ -70,11 +65,8 @@ export default function BookSlotPage() {
         setSlots(slotsList);
         setSelectedSlot(null);
 
-        // Smart Slot Recommendation: least congested slot
-        // Filter for slots that are not full
         const availableSlots = slotsList.filter((s: any) => s.booked_count < s.max_capacity);
         if (availableSlots.length > 0) {
-          // Sort by booked_count ascending to find least congested
           const sorted = [...availableSlots].sort((a: any, b: any) => a.booked_count - b.booked_count);
           setRecommendedSlot(sorted[0]);
         } else {
@@ -90,7 +82,6 @@ export default function BookSlotPage() {
     fetchSlots();
   }, [selectedCentre, date]);
 
-  // 4. Handle Submit Booking
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCentre || !selectedSlot || !date || !cropType || !qty) {
@@ -113,7 +104,6 @@ export default function BookSlotPage() {
       setCreatedBooking(booking);
       setSuccess(true);
       
-      // Redirect back to dashboard after 3 seconds
       setTimeout(() => {
         window.location.href = "/farmer";
       }, 3000);
@@ -126,90 +116,96 @@ export default function BookSlotPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="border-b border-slate-200 pb-4">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-900">{t("book_header")}</h2>
+    <div className="max-w-5xl mx-auto space-y-8">
+      
+      {/* Title */}
+      <div className="border-b border-slate-200/80 pb-5">
+        <h2 className="text-xl md:text-2xl font-black text-slate-900">{t("book_header")}</h2>
         <p className="text-xs text-slate-500">
-          Book online, receive a token, and arrive at the centre when your turn is close.
+          Complete the steps below to reserve your slot and avoid waiting in Mandi lines.
         </p>
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-xs flex items-start gap-2">
+        <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs flex items-start gap-2">
           <AlertCircle size={16} className="shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {success && createdBooking && (
-        <div className="p-6 bg-green-50 border border-green-200 rounded-xl space-y-4 text-center max-w-md mx-auto">
-          <CheckCircle2 size={36} className="text-green-700 mx-auto" />
-          <h3 className="text-lg font-bold text-green-900">{t("booking_success")}</h3>
-          <div className="bg-white p-4 border border-green-200 rounded-lg space-y-2 text-xs text-slate-700">
-            <div className="flex justify-between font-medium">
-              <span>Token Number:</span>
-              <span className="font-extrabold text-blue-900 text-sm">{createdBooking.token_number}</span>
+        <div className="p-8 bg-green-50 border border-green-200 rounded-3xl space-y-6 text-center max-w-md mx-auto shadow-md">
+          <CheckCircle2 size={44} className="text-green-700 mx-auto" />
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-black text-green-950">{t("booking_success")}</h3>
+            <p className="text-xs text-slate-500">Your appointment is confirmed and added to database.</p>
+          </div>
+          
+          <div className="bg-white p-5 border border-green-200 rounded-2xl space-y-3.5 text-xs text-slate-700 text-left">
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Token Number:</span>
+              <span className="font-black text-blue-900 text-sm">{createdBooking.token_number}</span>
             </div>
             <div className="flex justify-between">
-              <span>Centre:</span>
-              <span className="font-bold">{selectedCentre?.name}</span>
+              <span className="text-slate-400 font-medium">Mandi Centre:</span>
+              <span className="font-bold text-slate-800">{selectedCentre?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span>Date:</span>
-              <span className="font-bold">{date}</span>
+              <span className="text-slate-400 font-medium">Booking Date:</span>
+              <span className="font-bold text-slate-800">{date}</span>
             </div>
             <div className="flex justify-between">
-              <span>Time Slot:</span>
-              <span className="font-bold">
+              <span className="text-slate-400 font-medium">Time Window:</span>
+              <span className="font-bold text-slate-800">
                 {selectedSlot?.start_time?.substring(0, 5)} - {selectedSlot?.end_time?.substring(0, 5)}
               </span>
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 animate-pulse">
-            Redirecting you to dashboard live queue tracker...
+          <p className="text-[10px] text-slate-400 animate-pulse font-semibold">
+            Opening your live queue dashboard portal...
           </p>
         </div>
       )}
 
       {!success && (
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Booking Form Steps */}
+          
+          {/* Form Steps */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Step 1: Choose Centre */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                <span className="h-5 w-5 bg-green-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold">1</span>
+            {/* Step 1: Centre Discovery */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                <span className="h-6 w-6 bg-green-700 text-white rounded-xl flex items-center justify-center text-[10px] font-black">1</span>
                 <span>{t("select_centre")}</span>
               </h3>
 
-              {/* Discovery search filters */}
               <form onSubmit={handleSearchCentres} className="grid sm:grid-cols-3 gap-3">
                 <input
                   type="text"
                   placeholder={t("search_dist")}
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none"
+                  className="px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition"
                 />
                 <input
                   type="text"
                   placeholder={t("search_block")}
                   value={block}
                   onChange={(e) => setBlock(e.target.value)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none"
+                  className="px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition"
                 />
                 <button
                   type="submit"
                   disabled={centresLoading}
-                  className="py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition"
+                  className="py-2.5 bg-slate-850 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition uppercase tracking-wider"
                 >
                   {centresLoading ? "Searching..." : t("btn_search")}
                 </button>
               </form>
 
-              {/* Centre Selection List */}
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              {/* Discovery lists */}
+              <div className="space-y-2 max-h-48 overflow-y-auto pt-2">
                 {centres.length > 0 ? (
                   centres.map((c) => (
                     <button
@@ -218,18 +214,18 @@ export default function BookSlotPage() {
                         setSelectedCentre(c);
                         setSelectedSlot(null);
                       }}
-                      className={`w-full text-left p-3 border rounded-lg transition flex justify-between items-center ${
+                      className={`w-full text-left p-3.5 border rounded-2xl transition flex justify-between items-center ${
                         selectedCentre?.id === c.id 
-                          ? "border-green-600 bg-green-50/50" 
-                          : "border-slate-200 hover:border-slate-300 bg-slate-50/20"
+                          ? "border-green-600 bg-green-50/40" 
+                          : "border-slate-200 hover:border-slate-300 bg-white"
                       }`}
                     >
                       <div className="text-xs">
-                        <div className="font-bold text-slate-800 flex items-center gap-1">
-                          <MapPin size={12} className="text-green-700" />
+                        <div className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                          <Landmark size={14} className="text-green-700" />
                           <span>{c.name}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        <span className="text-[10px] text-slate-400 mt-1 block">
                           District: {c.district} | Block: {c.block} | Village: {c.village}
                         </span>
                       </div>
@@ -238,42 +234,43 @@ export default function BookSlotPage() {
                   ))
                 ) : (
                   <div className="text-center py-6 text-slate-400 text-xs">
-                    No active procurement centres found.
+                    No procurement centres matched filters.
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Step 2: Choose Date & Step 3: Choose Slot */}
+            {/* Step 2: Date & Step 3: Slots */}
             {selectedCentre && (
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-6">
-                {/* Date Picker */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-6">
+                
+                {/* Date Selection */}
                 <div className="space-y-3">
-                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                    <span className="h-5 w-5 bg-green-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold">2</span>
+                  <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <span className="h-6 w-6 bg-green-700 text-white rounded-xl flex items-center justify-center text-[10px] font-black">2</span>
                     <span>{t("select_date")}</span>
                   </h3>
                   <div className="relative max-w-xs">
-                    <Calendar size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                    <Calendar size={14} className="absolute left-3 top-3 text-slate-400" />
                     <input
                       type="date"
                       required
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition"
                     />
                   </div>
                 </div>
 
                 {/* Slots selection */}
-                <div className="space-y-3 pt-2">
-                  <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                    <span className="h-5 w-5 bg-green-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold">3</span>
+                <div className="space-y-4 pt-2">
+                  <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                    <span className="h-6 w-6 bg-green-700 text-white rounded-xl flex items-center justify-center text-[10px] font-black">3</span>
                     <span>{t("select_slot")}</span>
                   </h3>
 
                   {slotsLoading ? (
-                    <div className="text-center py-4 text-xs text-slate-400">Loading slots availability...</div>
+                    <div className="text-center py-6 text-xs text-slate-400">Syncing slot parameters...</div>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-3">
                       {slots.map((s) => {
@@ -284,28 +281,28 @@ export default function BookSlotPage() {
                             key={s.id}
                             disabled={isFull}
                             onClick={() => setSelectedSlot(s)}
-                            className={`p-3 border rounded-lg transition text-left flex flex-col justify-between h-20 relative ${
+                            className={`p-3.5 border rounded-2xl transition text-left flex flex-col justify-between h-20 relative ${
                               selectedSlot?.id === s.id 
-                                ? "border-green-600 bg-green-50/50" 
+                                ? "border-green-600 bg-green-50/40" 
                                 : isFull 
-                                ? "border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed"
+                                ? "border-slate-100 bg-slate-50/50 text-slate-400 cursor-not-allowed"
                                 : "border-slate-200 hover:border-slate-300 bg-white"
                             }`}
                           >
                             {isRecommended && !isFull && (
-                              <span className="absolute top-2 right-2 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              <span className="absolute top-2.5 right-2.5 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
                                 Recommended
                               </span>
                             )}
-                            <div className="flex items-center gap-1 text-xs font-bold">
+                            <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800">
                               <Clock size={12} className="text-slate-400" />
                               <span>{s.start_time.substring(0, 5)} - {s.end_time.substring(0, 5)}</span>
                             </div>
                             <div className="text-[10px]">
                               {isFull ? (
-                                <span className="text-red-500 font-semibold">Fully Booked</span>
+                                <span className="text-red-500 font-bold">Capacity Full</span>
                               ) : (
-                                <span className="text-slate-500 font-medium">
+                                <span className="text-slate-500 font-semibold">
                                   {s.max_capacity - s.booked_count} {t("slots_available")}
                                 </span>
                               )}
@@ -319,11 +316,11 @@ export default function BookSlotPage() {
               </div>
             )}
 
-            {/* Step 4: Crop Details */}
+            {/* Step 4: Crop specs */}
             {selectedCentre && selectedSlot && (
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-                <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                  <span className="h-5 w-5 bg-green-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold">4</span>
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
+                  <span className="h-6 w-6 bg-green-700 text-white rounded-xl flex items-center justify-center text-[10px] font-black">4</span>
                   <span>{t("enter_crop_details")}</span>
                 </h3>
 
@@ -333,7 +330,7 @@ export default function BookSlotPage() {
                     <select
                       value={cropType}
                       onChange={(e) => setCropType(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none"
                     >
                       <option value="Paddy">{t("paddy")}</option>
                       <option value="Wheat">{t("wheat")}</option>
@@ -346,11 +343,10 @@ export default function BookSlotPage() {
                       type="number"
                       required
                       min="1"
-                      max="500"
                       value={qty}
                       onChange={(e) => setQty(e.target.value)}
                       placeholder="e.g. 50"
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none"
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
                     />
                   </div>
                 </div>
@@ -359,35 +355,35 @@ export default function BookSlotPage() {
                   <button
                     onClick={handleConfirmBooking}
                     disabled={loading}
-                    className="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-bold text-sm rounded-lg transition shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition shadow shadow-green-900/10 flex items-center justify-center gap-1.5 active:scale-95 duration-150"
                   >
                     <CheckCircle2 size={16} />
-                    <span>{loading ? "Generating Token..." : t("btn_confirm_booking")}</span>
+                    <span>{loading ? "Creating booking..." : t("btn_confirm_booking")}</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Booking Summary Panel (Right side) */}
-          <div className="space-y-4">
-            <div className="bg-slate-900 text-white border border-slate-800 rounded-xl p-5 shadow space-y-4 text-xs">
-              <h3 className="font-bold border-b border-slate-800 pb-2 text-[10px] uppercase text-slate-400 tracking-wider">
+          {/* Booking Summary Panel */}
+          <div className="space-y-6">
+            <div className="bg-slate-900 text-white border border-slate-950 rounded-2xl p-5 shadow space-y-4 text-xs">
+              <h3 className="font-extrabold border-b border-slate-800 pb-2 text-[10px] uppercase text-slate-500 tracking-widest">
                 Booking Summary Review
               </h3>
               
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 <div>
-                  <span className="text-[10px] uppercase text-slate-500 block">Mandi Centre</span>
-                  <span className="font-bold">{selectedCentre ? selectedCentre.name : "Not selected"}</span>
+                  <span className="text-[9px] uppercase text-slate-500 block tracking-wider">Mandi Location</span>
+                  <span className="font-bold text-slate-200">{selectedCentre ? selectedCentre.name : "Not selected"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-slate-500 block">Date</span>
-                  <span className="font-bold">{date || "Not selected"}</span>
+                  <span className="text-[9px] uppercase text-slate-500 block tracking-wider">Appointment Date</span>
+                  <span className="font-bold text-slate-200">{date || "Not selected"}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-slate-500 block">Time Slot</span>
-                  <span className="font-bold">
+                  <span className="text-[9px] uppercase text-slate-500 block tracking-wider">Time Window</span>
+                  <span className="font-bold text-slate-200">
                     {selectedSlot 
                       ? `${selectedSlot.start_time.substring(0, 5)} - ${selectedSlot.end_time.substring(0, 5)}` 
                       : "Not selected"
@@ -395,33 +391,33 @@ export default function BookSlotPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase text-slate-500 block">Crop Specifications</span>
-                  <span className="font-bold">{cropType} | Estimated Qty: {qty ? `${qty} qtl` : "Not specified"}</span>
+                  <span className="text-[9px] uppercase text-slate-500 block tracking-wider">Crop Details</span>
+                  <span className="font-bold text-slate-200">{cropType} {qty ? `| Qty: ${qty} qtl` : ""}</span>
                 </div>
               </div>
 
               {selectedCentre && (
-                <div className="pt-3 border-t border-slate-800 space-y-2">
+                <div className="pt-4 border-t border-slate-800 space-y-2.5">
                   <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-500">Mandi Congestion:</span>
+                    <span className="text-slate-500 font-medium">Estimated wait:</span>
                     <span className="px-2 py-0.5 bg-green-500/20 text-green-400 font-bold rounded uppercase tracking-wide">
                       LOW
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-500">Avg Service Time:</span>
-                    <span className="text-slate-300 font-bold">{selectedCentre.avg_service_time_mins} minutes/farmer</span>
+                    <span className="text-slate-500 font-medium">Avg processing time:</span>
+                    <span className="text-slate-300 font-bold">{selectedCentre.avg_service_time_mins} mins</span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Smart info tip card */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-[10px] leading-relaxed flex gap-2">
-              <AlertCircle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+            {/* Smart info badge details */}
+            <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 text-amber-900 text-[10px] leading-relaxed flex gap-2">
+              <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold block">Smart Booking Tip:</span>
-                We recommend picking slots marked with the <span className="font-bold text-amber-600">RECOMMENDED</span> badge. These times have historically lower queues and will save you from waiting at the centre.
+                <span className="font-extrabold block text-amber-800">Smart Recommendation Badge:</span>
+                Picking slots with the <span className="font-bold text-amber-600">RECOMMENDED</span> badge means lower queue times at the Mandi, as calculated by today's operational patterns.
               </div>
             </div>
           </div>
