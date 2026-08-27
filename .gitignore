@@ -1,0 +1,30 @@
+# Dependencies
+/frontend/node_modules
+/frontend/.next
+/frontend/out
+
+# Python virtual environment
+/backend/venv
+/backend/.pytest_cache
+/backend/__pycache__
+/backend/app/__pycache__
+/backend/app/api/__pycache__
+/backend/app/models/__pycache__
+/backend/app/schemas/__pycache__
+/backend/app/services/__pycache__
+/backend/app/websocket/__pycache__
+/backend/tests/__pycache__
+
+# Local SQLite databases
+/backend/procurement.db
+/backend/test.db
+/backend/app/procurement.db
+
+# Environment variables & secrets
+.env
+/backend/.env
+/frontend/.env
+
+# OS files
+.DS_Store
+Thumbs.db
